@@ -31,10 +31,10 @@ namespace tc
 	{
 		namespace detail
 		{
-			double GetDblFromSS(std::stringstream& ss);
+			double ParseDouble(std::stringstream& ss);
 		}
 
-		void GetDataFromSS(TransportCatalogue& transpCat);
+		void ReadTransportCatalogue(TransportCatalogue& transp_cat, std::istream& input);
 		StopParams ParseStop(std::stringstream& stop_query);
 		BusParams ParseBus(std::stringstream& bus_query, bool is_cycle_route);
 	}

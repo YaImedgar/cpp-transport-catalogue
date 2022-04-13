@@ -7,12 +7,15 @@ using namespace std;
 
 int main()
 {
-	tc::TransportCatalogue transpCat;
+    tc::TransportCatalogue transp_catalogue;
 
-	tc::input::GetDataFromSS(transpCat);
-	tc::output::ReceiveRequest(transpCat);
+    tc::input::ReadTransportCatalogue(transp_catalogue, cin);
 
-	return 0;
+    tc::output::Requests request(transp_catalogue);
+    vector<string> queries = request.ReadRequests(cin);
+    request.HandleRequests(cout, queries);
+
+    return 0;
 }
 
 //#include "test_transport_catalogue.h"

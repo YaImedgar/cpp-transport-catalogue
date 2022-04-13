@@ -6,69 +6,73 @@ namespace tc
 {
 	namespace output
 	{
-		void ReceiveRequest(const tc::TransportCatalogue& transpCat)
+		std::vector<std::string> Requests::ReadRequests(std::istream& input)
 		{
 			int num_of_queries;
-			cin >> num_of_queries;
+			input >> num_of_queries;
 
-			string blank; //TODO fix with getnumber
-			getline(cin, blank);
+			std::string blank; //TODO fix with getnumber
+			getline(input, blank);
 
-			vector<string> queries;
+			std::vector<std::string> queries;
 			queries.reserve(num_of_queries);
 
-			string query;
+			std::string query;
 			while (num_of_queries--)
 			{
-				getline(cin, query);
+				getline(input, query);
 				queries.push_back(query);
 			}
+			return queries;
+		}
 
+		void Requests::HandleRequests(std::ostream& output, std::vector<std::string> queries)
+		{
 			for (string& query_str : queries)
 			{
 				if (query_str.compare(0, 5, "Stop ") == 0)
 				{
-					std::optional<tc::StopInfo> stop_info = transpCat.GetStopInfo(&query_str[5]);
+					std::optional<tc::StopInfo> stop_info = transp_cat_->GetStopInfo(&query_str[5]);
 
-					cout << query_str << ": ";
+					output << query_str << ": ";
 					if (stop_info.has_value())
 					{
 						set<string> buses = stop_info.value().buses;
 						if (!buses.empty())
 						{
-							cout << "buses";
+							output << "buses";
 							for (const string& bus : buses)
 							{
-								cout << " " << bus;
+								output << " " << bus;
 							}
-							cout << endl;
+							output << endl;
 						}
 						else
 						{
-							cout << "no buses" << endl;
+							output << "no buses" << endl;
 						}
 					}
 					else
 					{
-						cout << "not found" << endl;
+						output << "not found" << endl;
 					}
 				}
 				else if (query_str.compare(0, 4, "Bus ") == 0)
 				{
-					std::optional<tc::BusInfo> bus_info = transpCat.GetBusInfo(&query_str[4]);
+					std::optional<tc::BusInfo> bus_info = transp_cat_->GetBusInfo(&query_str[4]);
 
-					cout << query_str << ": ";
+					output << query_str << ": ";
 					if (bus_info.has_value())
 					{
 						tc::BusInfo b_i = bus_info.value();
-						cout << b_i.total_stops << " stops on route, "s <<
+						output << b_i.total_stops << " stops on route, "s <<
 							b_i.total_unique_stops << " unique stops, "s << std::setprecision(6) <<
 							b_i.route_length << " route length, "s <<
 							b_i.curvature << " curvature"s << endl;
 					}
 					else
 					{
-						cout << "not found" << endl;
+						output << "not found" << endl;
 					}
 				}
 			}

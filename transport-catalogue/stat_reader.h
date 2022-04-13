@@ -18,6 +18,17 @@ namespace tc
 	class TransportCatalogue;
 	namespace output
 	{
-		void ReceiveRequest(const TransportCatalogue& transpCat);
+		class Requests
+		{
+		public:
+			explicit Requests(const TransportCatalogue& transp_cat)
+				: transp_cat_(&transp_cat)
+			{}
+
+			std::vector<std::string> ReadRequests(std::istream& input);
+			void HandleRequests(std::ostream& output, std::vector<std::string> queries);
+		private:
+			const TransportCatalogue* const transp_cat_;
+		};
 	}
 }

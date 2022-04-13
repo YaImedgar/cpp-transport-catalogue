@@ -4,22 +4,22 @@ namespace tc
 {
 	namespace input
 	{
-		void GetDataFromSS(TransportCatalogue& transpCat)
+		void ReadTransportCatalogue(TransportCatalogue& transp_cat, std::istream& input)
 		{
 			int num_of_queries;
-			cin >> num_of_queries;
+			input >> num_of_queries;
 
 			{
 				string blank; //TODO fix with getnumber
-				getline(cin, blank);
+				getline(input, blank);
 			}
 
 			vector<string> queries;
 
 			string query;
- 			while (num_of_queries--)
+			while (num_of_queries--)
 			{
-				getline(cin, query);
+				getline(input, query);
 				queries.push_back(query);
 			}
 
@@ -33,13 +33,13 @@ namespace tc
 				if (query_str.compare(0, 5, "Stop ") == 0)
 				{
 					StopParams stop = ParseStop(ss_query);
-					transpCat.AddStop(move(stop));
+					transp_cat.AddStop(move(stop));
 				}
 				else if (query_str.compare(0, 4, "Bus ") == 0)
 				{
 					bool is_cycle_route = query_str.find_first_of('-') != string::npos;
 					BusParams bus_to_stops = ParseBus(ss_query, is_cycle_route);
-					transpCat.AddBus(move(bus_to_stops));
+					transp_cat.AddBus(move(bus_to_stops));
 				}
 			}
 		}
@@ -54,8 +54,8 @@ namespace tc
 				stop_name = stop_name.substr(5);
 			}
 
-			double latitude = detail::GetDblFromSS(stop_query);
-			double longitude = detail::GetDblFromSS(stop_query);
+			double latitude = detail::ParseDouble(stop_query);
+			double longitude = detail::ParseDouble(stop_query);
 
 			string distance;
 			unordered_map<string, long> distance_to_other_stop;
@@ -100,10 +100,11 @@ namespace tc
 		}
 		namespace detail
 		{
-			double GetDblFromSS(std::stringstream& ss)
+			double ParseDouble(std::stringstream& ss)
 			{
 				string str;
 				getline(ss, str, ',');
+
 				/*size_t dot_pos = str.find_first_of('.');
 				if (dot_pos != string::npos)
 				{
