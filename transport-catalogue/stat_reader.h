@@ -1,5 +1,7 @@
 #pragma once
 
+#include "transport_catalogue.h"
+
 #include <string>
 #include <vector>
 #include <iostream>
@@ -10,8 +12,6 @@ using std::getline;
 using std::cout;
 using std::ostream;
 using std::endl;
-
-#include "transport_catalogue.h"
 
 namespace tc
 {

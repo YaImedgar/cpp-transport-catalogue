@@ -1,6 +1,6 @@
-﻿#include "input_reader.h"
-#include "transport_catalogue.h"
-#include "stat_reader.h"
+﻿#include "transport_catalogue.h"
+#include "request_handler.h"
+#include "json_reader.h"
 #include "geo.h"
 
 using namespace std;
@@ -8,12 +8,9 @@ using namespace std;
 int main()
 {
     tc::TransportCatalogue transp_catalogue;
+    map_render::MapSettings map_settings;
 
-    tc::input::ReadTransportCatalogue(transp_catalogue, cin);
-
-    tc::output::Requests request(transp_catalogue);
-    vector<string> queries = request.ReadRequests(cin);
-    request.HandleRequests(cout, queries);
+    json_reader::ReadRequests( transp_catalogue, map_settings, cin );
 
     return 0;
 }

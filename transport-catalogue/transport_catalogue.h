@@ -1,8 +1,7 @@
 #pragma once
 
 #include "geo.h"
-#include "input_reader.h"
-#include "stat_reader.h"
+#include "domain.h"
 
 #include <string>
 #include <string_view>
@@ -17,110 +16,43 @@
 #include <algorithm>
 #include <cmath>
 
-using std::string;
-using std::string_view;
-using std::vector;
-using std::deque;
-using std::unordered_map;
-using std::hash;
-using std::get;
-using std::list;
-using std::tuple;
-using std::set;
-using std::for_each;
-using std::move;
-using std::optional;
-
-using namespace tc::geo;
+using namespace geo;
 
 namespace tc
 {
-	typedef std::tuple<std::string/*Stop Name*/, tc::geo::Coordinates, std::unordered_map<std::string, long>/*Distance to other bus stop*/> StopParams;
-	typedef std::tuple<std::string/*Bus Name*/, std::list<std::string>/*Stops names*/> BusParams;
+    typedef std::tuple<std::string/*Stop Name*/, geo::Coordinates, std::unordered_map<std::string, int>/*Distance to other bus stop*/> StopParams;
+    typedef std::tuple<std::string/*Bus Name*/, std::list<std::string>/*Stops names*/, bool> BusParams;
 
-	struct BusInfo
-	{
-		size_t total_stops;
-		size_t total_unique_stops;
-		double route_length;
-		double curvature;
-	};
+    struct BusInfo
+    {
+        int total_stops;
+        int total_unique_stops;
+        double route_length;
+        double curvature;
+    };
 
-	struct StopInfo
-	{
-		set<string> buses;
-	};
+    struct StopInfo
+    {
+        std::set<std::string> buses;
+    };
 
-	class Stop
-	{
-	public:
-		explicit Stop(StopParams&& stop);
+    class TransportCatalogue
+    {
+    public:
+        void AddStop( StopParams&& stop );
+        domain::Stop* FindStop( std::string stop_name ) const;
+        void AddBus( BusParams&& bus );
+        domain::Bus* FindBus( std::string bus_name ) const;
+        std::optional<BusInfo> GetBusInfo( std::string bus_name ) const;
+        std::optional<StopInfo> GetStopInfo( std::string stop_name ) const;
+        const std::deque<domain::Bus>& GetAllBuses( void ) const;
+        const std::deque<domain::Stop>& GetAllStops( void ) const;
 
-		Stop() = delete;
-		Stop(const Stop& other) = delete;
-		Stop& operator=(const Stop& other) = delete;
+    private:
+        std::deque<domain::Bus> _buses;
+        std::unordered_map<std::string_view, domain::Bus*> _busname_to_bus;
 
-		Stop(Stop&& other) = delete;
-		Stop& operator=(Stop&& other) = delete;
-
-		std::string_view GetName();
-		void AddBus(string bus_name);
-		Coordinates GetCoordinates();
-		set<string> GetBuses();
-		void AddDistToOthStop(string stop, long distance);
-		std::optional<double> GetDistanceToOtherStop(std::string other_stop);
-
-	private:
-		string _stop_name;
-		Coordinates _coordinates;
-		unordered_map<string, long> _distance_to_other_stop;
-		set<string> _buses;
-	};
-
-	class Bus
-	{
-	public:
-		explicit Bus(string name, vector<Stop*>&& bus);
-
-		Bus() = delete;
-		Bus(const Bus& other) = delete;
-		Bus& operator=(const Bus& other) = delete;
-
-		Bus(Bus&& other) = delete;
-		Bus& operator=(Bus&& other) = delete;
-
-		std::string_view GetName();
-		size_t GetTotalStops();
-		size_t GetTotalUniqueStopst();
-		double GetRouteLength();
-		double GetRouteLengthStraight();
-		double GetCurvature();
-
-	private:
-		string _bus_name;
-		vector<Stop*> _stops;
-		size_t _total_stops;
-		size_t _total_unique_stops;
-		double _route_length_normal;
-		double _route_length_straight;
-	};
-
-	class TransportCatalogue
-	{
-		typedef std::tuple<std::string, Coordinates, std::unordered_map<std::string, long>> StopParams;
-	public:
-		void AddStop(StopParams&& stop);
-		Stop* FindStop(string stop_name) const;
-		void AddBus(BusParams&& bus);
-		Bus* FindBus(string bus_name) const;
-		std::optional<BusInfo> GetBusInfo(string bus_name) const;
-		std::optional<StopInfo> GetStopInfo(string stop_name) const;
-
-	private:
-		deque<Bus> _buses;
-		unordered_map<std::string_view, Bus*> _busname_to_bus;
-
-		deque<Stop> _stops;
-		unordered_map<std::string_view, Stop*> _stopname_to_stop;
-	};
+        std::deque<domain::Stop> _stops;
+        std::unordered_map<std::string_view, domain::Stop*> _stopname_to_stop;
+    };
 }

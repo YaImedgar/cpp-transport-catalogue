@@ -28,7 +28,7 @@ namespace tc
 
 		void Requests::HandleRequests(std::ostream& output, std::vector<std::string> queries)
 		{
-			for (string& query_str : queries)
+			for (std::string& query_str : queries)
 			{
 				if (query_str.compare(0, 5, "Stop ") == 0)
 				{
@@ -37,11 +37,11 @@ namespace tc
 					output << query_str << ": ";
 					if (stop_info.has_value())
 					{
-						set<string> buses = stop_info.value().buses;
+						std::set<std::string> buses = stop_info.value().buses;
 						if (!buses.empty())
 						{
 							output << "buses";
-							for (const string& bus : buses)
+							for (const std::string& bus : buses)
 							{
 								output << " " << bus;
 							}

@@ -19,14 +19,10 @@ using std::string;
 using std::list;
 using std::tuple;
 
-using namespace tc::geo;
+using namespace geo;
 
-namespace tc
+/*namespace tc
 {
-	class TransportCatalogue;
-	typedef std::tuple<std::string/*Stop Name*/, tc::geo::Coordinates, std::unordered_map<std::string, long>/*Distance to other bus stop*/> StopParams;
-	typedef std::tuple<std::string/*Bus Name*/, std::list<std::string>/*Stops names*/> BusParams;
-
 	namespace input
 	{
 		namespace detail
@@ -34,8 +30,8 @@ namespace tc
 			double ParseDouble(std::stringstream& ss);
 		}
 
-		void ReadTransportCatalogue(TransportCatalogue& transp_cat, std::istream& input);
+		void ReadTransportCatalogue(tc::TransportCatalogue& transp_cat, std::istream& input);
 		StopParams ParseStop(std::stringstream& stop_query);
 		BusParams ParseBus(std::stringstream& bus_query, bool is_cycle_route);
 	}
-}
+}*/

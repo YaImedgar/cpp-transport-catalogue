@@ -2,6 +2,7 @@
 
 #include "transport_catalogue.h"
 #include "input_reader.h"
+#include "domain.h"
 
 #include <vector>
 #include <string>
