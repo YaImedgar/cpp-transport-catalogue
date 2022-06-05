@@ -43,6 +43,7 @@ namespace tc
         domain::Stop* FindStop( std::string stop_name ) const;
         void AddBus( BusParams&& bus );
         domain::Bus* FindBus( std::string bus_name ) const;
+
         std::optional<BusInfo> GetBusInfo( std::string bus_name ) const;
         std::optional<StopInfo> GetStopInfo( std::string stop_name ) const;
         const std::deque<domain::Bus>& GetAllBuses( void ) const;

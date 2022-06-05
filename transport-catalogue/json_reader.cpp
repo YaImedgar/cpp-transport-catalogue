@@ -2,35 +2,60 @@
 
 namespace json_reader
 {
-    void ReadRequests( tc::TransportCatalogue& transp_cat,
-                       map_render::MapSettings& map_settings,
-                       std::istream& input )
+    void JSONReader::ReadRequestFrom(std::istream &input)
     {
-        json::Document json_doc = json::Load( input );
+        const json::Document json_doc = json::Load( input );
         const json::Node& node = json_doc.GetRoot();
         const json::Dict& requests = node.AsMap();
 
         if ( requests.count( "base_requests" ) )
         {
-            InsertData( transp_cat, requests.at( "base_requests" ).AsArray() );
+            auto base_requests = requests.at( "base_requests" ).AsArray();
+            ParseBaseRequests(std::move(base_requests));
         }
 
         if ( requests.count( "render_settings" ) )
         {
-            RenderSettings( requests.at( "render_settings" ).AsMap(), map_settings );
+            auto render_settings = requests.at( "render_settings" ).AsMap();
+            SetRenderSettings( std::move(render_settings), map_settings_ );
         }
+
         if ( requests.count( "stat_requests" ) )
         {
-            GetData( transp_cat, requests.at( "stat_requests" ).AsArray(), map_settings );
+            auto stat_requests = requests.at( "stat_requests" ).AsArray();
+            ParseStatRequests(std::move(stat_requests), map_settings_, std::cout);
         }
     }
 
-    svg::Point GetSVGPoint( const json::Array& pair )
+    void JSONReader::ParseBaseRequests(const json::Array& base_requests)
+    {
+        std::vector<tc::StopParams> stops;
+        std::vector<tc::BusParams> buses;
+
+        for ( const auto& request : base_requests )
+        {
+            const json::Dict values = request.AsMap();
+            std::string_view type = values.at( "type" ).AsString();
+            if ( "Stop" == type  )
+            {
+                stops.push_back( ParseStop(values) );
+            }
+            else if ( "Bus" == type )
+            {
+                buses.push_back( ParseBus(values) );
+            }
+        }
+
+        tc_handler_.AddStops(stops);
+        tc_handler_.AddBuses(buses);
+    }
+
+    svg::Point JSONReader::GetSVGPoint(const json::Array &pair)
     {
         return svg::Point{ pair.front().AsDouble(), pair.back().AsDouble() };
     }
 
-    svg::Color GetColor( const json::Node& color_node )
+    svg::Color JSONReader::GetColor(const json::Node &color_node)
     {
         if ( color_node.IsString() )
         {
@@ -56,124 +81,98 @@ namespace json_reader
         return {};
     }
 
-    void RenderSettings( const json::Dict& nodes,
-                         map_render::MapSettings& map_settings )
+    void JSONReader::SetRenderSettings(const json::Dict &settings, map_render::MapSettings &general_settings)
     {
-        if ( nodes.count( "width" ) )
-            map_settings.width = nodes.at( "width" ).AsDouble();
+        map_render::MapSettings map_settings;
 
-        if ( nodes.count( "height" ) )
-            map_settings.height = nodes.at( "height" ).AsDouble();
+        if ( settings.count( "width" ) )
+            map_settings.width = settings.at( "width" ).AsDouble();
 
-        if ( nodes.count( "padding" ) )
-            map_settings.padding = nodes.at( "padding" ).AsDouble();
+        if ( settings.count( "height" ) )
+            map_settings.height = settings.at( "height" ).AsDouble();
 
-        if ( nodes.count( "line_width" ) )
-            map_settings.line_width = nodes.at( "line_width" ).AsDouble();
+        if ( settings.count( "padding" ) )
+            map_settings.padding = settings.at( "padding" ).AsDouble();
 
-        if ( nodes.count( "stop_radius" ) )
-            map_settings.stop_radius = nodes.at( "stop_radius" ).AsDouble();
+        if ( settings.count( "line_width" ) )
+            map_settings.line_width = settings.at( "line_width" ).AsDouble();
 
-        if ( nodes.count( "bus_label_font_size" ) )
-            map_settings.bus_label_font_size = nodes.at( "bus_label_font_size" ).AsInt();
+        if ( settings.count( "stop_radius" ) )
+            map_settings.stop_radius = settings.at( "stop_radius" ).AsDouble();
 
-        if ( nodes.count( "bus_label_offset" ) )
-            map_settings.bus_label_offset = GetSVGPoint( nodes.at( "bus_label_offset" ).AsArray() );
+        if ( settings.count( "bus_label_font_size" ) )
+            map_settings.bus_label_font_size = settings.at( "bus_label_font_size" ).AsInt();
 
-        if ( nodes.count( "stop_label_font_size" ) )
-            map_settings.stop_label_font_size = nodes.at( "stop_label_font_size" ).AsInt();
+        if ( settings.count( "bus_label_offset" ) )
+            map_settings.bus_label_offset = GetSVGPoint( settings.at( "bus_label_offset" ).AsArray() );
 
-        if ( nodes.count( "stop_label_offset" ) )
-            map_settings.stop_label_offset = GetSVGPoint( nodes.at( "stop_label_offset" ).AsArray() );
+        if ( settings.count( "stop_label_font_size" ) )
+            map_settings.stop_label_font_size = settings.at( "stop_label_font_size" ).AsInt();
 
-        if ( nodes.count( "underlayer_color" ) )
-            map_settings.underlayer_color = GetColor( nodes.at( "underlayer_color" ) );
+        if ( settings.count( "stop_label_offset" ) )
+            map_settings.stop_label_offset = GetSVGPoint( settings.at( "stop_label_offset" ).AsArray() );
 
-        if ( nodes.count( "underlayer_width" ) )
-            map_settings.underlayer_width = nodes.at( "underlayer_width" ).AsDouble();
+        if ( settings.count( "underlayer_color" ) )
+            map_settings.underlayer_color = GetColor( settings.at( "underlayer_color" ) );
 
-        if ( nodes.count( "color_palette" ) )
+        if ( settings.count( "underlayer_width" ) )
+            map_settings.underlayer_width = settings.at( "underlayer_width" ).AsDouble();
+
+        if ( settings.count( "color_palette" ) )
         {
             map_settings.color_palette.clear();
 
-            for ( const json::Node& color : nodes.at( "color_palette" ).AsArray() )
+            for ( const json::Node& color : settings.at( "color_palette" ).AsArray() )
             {
                 map_settings.color_palette.push_back( GetColor( color ) );
             }
         }
+        general_settings = std::move(map_settings);
     }
 
-    void InsertData( tc::TransportCatalogue& transp_cat, const json::Array& nodes )
+    void JSONReader::ParseStatRequests(const json::Array &stat_requests,
+                                       map_render::MapSettings &map_settings,
+                                       std::ostream &output)
     {
-        std::vector<json::Node> buses;
-        std::vector<json::Node> stops;
+        json::Array json_answer;
 
-        for ( const auto& node : nodes )
+        for ( const auto& request : stat_requests )
         {
-            const json::Dict values = node.AsMap();
-            std::string_view type = values.at( "type" ).AsString();
-            if ( type.compare( "Stop" ) == 0 )
-            {
-                stops.push_back( values );
-            }
-            else if ( type.compare( "Bus" ) == 0 )
-            {
-                buses.push_back( values );
-            }
-        }
-
-        for ( const auto& stop : stops )
-        {
-            transp_cat.AddStop( std::move( ParseStop( stop.AsMap() ) ) );
-        }
-        for ( const auto& bus : buses )
-        {
-            transp_cat.AddBus( std::move( ParseBus( bus.AsMap() ) ) );
-        }
-    }
-
-    void GetData( tc::TransportCatalogue& transp_cat,
-                  const json::Array& nodes,
-                  map_render::MapSettings& map_settings )
-    {
-        json::Array request_handler;
-        for ( const auto& query : nodes )
-        {
-            const auto& map = query.AsMap();
-            std::string_view query_str = map.at( "type" ).AsString();
+            const auto& map = request.AsMap();
+            std::string_view request_type = map.at( "type" ).AsString();
             int request_id = map.at( "id" ).AsInt();
 
-            if ( query_str.compare( "Map" ) == 0 )
+            if ( "Map" == request_type)
             {
                 json::Dict map_dict;
                 map_dict.emplace( "request_id", request_id );
-                std::stringstream ss = map_render::MapRender::Render( map_settings,
-                                                                      transp_cat.GetAllBuses() );
+                std::stringstream ss = map_render::MapRender::Render( map_settings, tc_handler_.GetAllBuses() );
 
                 map_dict.emplace( "map", ss.str() );
 
-                request_handler.emplace_back( std::move( map_dict ) );
+                json_answer.emplace_back( std::move( map_dict ) );
             }
             else
             {
                 std::string name = map.at( "name" ).AsString();
-                if ( query_str.compare( "Stop" ) == 0 )
+                if ( "Stop" == request_type )
                 {
-                    std::optional<tc::StopInfo> stop_info = transp_cat.GetStopInfo( name );
-                    request_handler.emplace_back( std::move( GetStopData( stop_info, request_id ) ) );
+                    std::optional<tc::StopInfo> stop_info = tc_handler_.GetStopInfo( name );
+                    json_answer.emplace_back( std::move( GetStopData( stop_info, request_id ) ) );
                 }
-                else if ( query_str.compare( "Bus" ) == 0 )
+                else if ( "Bus" == request_type )
                 {
-                    std::optional<tc::BusInfo> bus_info = transp_cat.GetBusInfo( name );
-                    request_handler.emplace_back( std::move( GetBusData( bus_info, request_id ) ) );
+                    std::optional<tc::BusInfo> bus_info = tc_handler_.GetBusInfo( name );
+                    json_answer.emplace_back( std::move( GetBusData( bus_info, request_id ) ) );
                 }
             }
         }
-        json::Document doc( request_handler );
-        json::Print( doc, std::cout );
+
+        json::Document doc( json_answer );
+        json::Print( doc, output );
     }
 
-    json::Node GetStopData( std::optional<tc::StopInfo> stop_info, int request_id )
+    json::Node JSONReader::GetStopData(std::optional<tc::StopInfo> stop_info, int request_id)
     {
         json::Dict stop_dict;
         stop_dict.emplace( "request_id", request_id );
@@ -198,7 +197,7 @@ namespace json_reader
         return stop_dict;
     }
 
-    json::Node GetBusData( std::optional<tc::BusInfo> bus_info, int request_id )
+    json::Node JSONReader::GetBusData(std::optional<tc::BusInfo> bus_info, int request_id)
     {
         json::Dict bus_dict;
         bus_dict.emplace( "request_id", request_id );
@@ -217,7 +216,7 @@ namespace json_reader
         return bus_dict;
     }
 
-    tc::StopParams ParseStop( const json::Dict& stop )
+    tc::StopParams JSONReader::ParseStop(const json::Dict &stop)
     {
         std::string stop_name = stop.at( "name" ).AsString();
 
@@ -225,7 +224,6 @@ namespace json_reader
         double longitude = stop.at( "longitude" ).AsDouble();
 
         std::unordered_map<std::string, int> distance_to_other_stop;
-
         for ( const auto& [stop_name, distance] : stop.at( "road_distances" ).AsMap() )
         {
             distance_to_other_stop.emplace( stop_name, distance.AsInt() );
@@ -234,7 +232,7 @@ namespace json_reader
         return { stop_name, Coordinates{latitude, longitude}, distance_to_other_stop };
     }
 
-    tc::BusParams ParseBus( const json::Dict& bus )
+    tc::BusParams JSONReader::ParseBus(const json::Dict &bus)
     {
         std::string bus_name = bus.at( "name" ).AsString();
 

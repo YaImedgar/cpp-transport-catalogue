@@ -1,7 +1,5 @@
 ﻿#include "transport_catalogue.h"
-#include "request_handler.h"
 #include "json_reader.h"
-#include "geo.h"
 
 using namespace std;
 
@@ -10,7 +8,8 @@ int main()
     tc::TransportCatalogue transp_catalogue;
     map_render::MapSettings map_settings;
 
-    json_reader::ReadRequests( transp_catalogue, map_settings, cin );
+    json_reader::JSONReader json_reader(transp_catalogue, map_settings);
+    json_reader.ReadRequestFrom(std::cin);
 
     return 0;
 }

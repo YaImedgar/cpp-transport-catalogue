@@ -81,10 +81,12 @@
 				return std::nullopt;
 			}
 		}
+
 		const std::deque<domain::Bus>& TransportCatalogue::GetAllBuses( void ) const
 		{
 			return _buses;
 		}
+
 		const std::deque<domain::Stop>& TransportCatalogue::GetAllStops( void ) const
 		{
 			return _stops;
