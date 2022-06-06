@@ -1,83 +1,104 @@
+//
+// Created by root on 19.05.2022.
+//
+
+//#ifndef JSON_BUILDER_JSON_H
+//#define JSON_BUILDER_JSON_H
 #pragma once
 
 #include <iostream>
 #include <map>
 #include <string>
-#include <sstream>
-#include <cassert>
-#include <vector>
 #include <variant>
-#include <unordered_map>
+#include <vector>
 
 namespace json
 {
 	class Node;
 	using Dict = std::map<std::string, Node>;
 	using Array = std::vector<Node>;
-	using NodeVariant = std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>;
 
-	// Эта ошибка должна выбрасываться при ошибках парсинга JSON
-	class ParsingError : public std::runtime_error {
+	class ParsingError : public std::runtime_error
+	{
 	public:
 		using runtime_error::runtime_error;
 	};
 
-	class Node {
+	class Node final
+		: private std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>
+	{
 	public:
-		Node() = default;
+		friend class Builder;
+		using variant::variant;
+		using Value = variant;
 
-		template <typename Type>
-		Node(Type value)
-			: json_node_(value)
-		{}
+		[[nodiscard]] bool IsInt() const;
+		[[nodiscard]] int AsInt() const;
 
-		bool operator==(const Node& other) const;
-		bool operator!=(const Node& other) const;
+		[[nodiscard]] bool IsPureDouble() const;
+		[[nodiscard]] bool IsDouble() const;
+		[[nodiscard]] double AsDouble() const;
 
-		bool IsNull() const;
-		bool IsArray() const;
-		bool IsMap() const;
-		bool IsBool() const;
-		bool IsInt() const;
-		bool IsDouble() const;
-		bool IsPureDouble() const;
-		bool IsString() const;
+		[[nodiscard]] bool IsBool() const;
+		[[nodiscard]] bool AsBool() const;
 
-		const Array& AsArray() const;
-		const Dict& AsMap() const;
-		bool AsBool() const;
-		int AsInt() const;
-		double AsDouble() const;
-		const std::string& AsString() const;
+		[[nodiscard]] bool IsNull() const;
+
+		[[nodiscard]] bool IsArray() const;
+
+		[[nodiscard]] const Array& AsArray() const;
+
+		[[nodiscard]] bool IsString() const;
+
+		[[nodiscard]] const std::string& AsString() const;
+
+		[[nodiscard]] bool IsDict() const;
+
+		[[nodiscard]] const Dict& AsDict() const;
+
+		bool operator==(const Node& rhs) const;
+
+		[[nodiscard]] const Value& GetValue() const;
 
 	private:
-		NodeVariant json_node_;
-
-		template <typename T>
-		const T& CheckAndReturnType() const
-		{
-			return (std::holds_alternative<T>(json_node_) ?
-				std::get<T>(json_node_) :
-				throw std::logic_error("Bad convertation"));
-		}
+		Value& GetValue();
 	};
 
-	class Document {
-	public:
-		explicit Document(Node root);
+	inline bool operator!=(const Node& lhs, const Node& rhs)
+	{
+		return !(lhs == rhs);
+	}
 
-		const Node& GetRoot() const;
+	class Document
+	{
+	public:
+		explicit Document(Node root)
+			: root_(std::move(root))
+		{}
+
+		[[nodiscard]] const Node& GetRoot() const
+		{
+			return root_;
+		}
 
 	private:
 		Node root_;
 	};
 
-	bool operator==(json::Document lhs, json::Document rhs);
-	bool operator!=(json::Document lhs, json::Document rhs);
+	inline bool operator==(const Document& lhs, const Document& rhs)
+	{
+		return lhs.GetRoot() == rhs.GetRoot();
+	}
+
+	inline bool operator!=(const Document& lhs, const Document& rhs)
+	{
+		return !(lhs == rhs);
+	}
 
 	Document Load(std::istream& input);
 
-	void Print(const Document& doc, std::ostream& output);
+	void Print(const Document& doc, std::ostream& output = std::cout);
 
-	std::string PrintStr(const Node& node);
 }  // namespace json
+
+//#endif //JSON_BUILDER_JSON_H

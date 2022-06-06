@@ -18,7 +18,7 @@ namespace tc
 					std::cerr << "s Hint: "s << hint;
 				}
 				std::cerr << std::endl;
- 				abort();
+				abort();
 			}
 		}
 
@@ -70,7 +70,7 @@ namespace tc
 					BusParams test_tuple = { "750"s, {"Tolstopaltsevo"s, "Marushkino"s, "Marushkino"s, "Rasskazovka"s, "Marushkino"s, "Marushkino"s, "Tolstopaltsevo"s }};
 					ASSERT(stop == test_tuple);
 				}
-			} 
+			}
 
 			void TestAll()
 			{

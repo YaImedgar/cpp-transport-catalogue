@@ -334,8 +334,8 @@ namespace svg
 		void DataTextToXML(std::ostream& out) const;
 
 		void RenderObject(const RenderContext& context) const override;
-		Point _position = { 0.0, 0.0 };
-		Point _offset = { 0.0, 0.0 };
+		svg::Point _position = { 0.0, 0.0 };
+		svg::Point _offset = { 0.0, 0.0 };
 		uint32_t _size = 1;
 		std::string _font_family;
 		std::string _font_weight;

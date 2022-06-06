@@ -1,17 +1,18 @@
 ﻿#include "transport_catalogue.h"
 #include "json_reader.h"
+#include "map_renderer.h"
 
 using namespace std;
 
 int main()
 {
-    tc::TransportCatalogue transp_catalogue;
-    map_render::MapSettings map_settings;
+	tc::TransportCatalogue transp_catalogue;
+	map_render::MapSettings map_settings;
 
-    json_reader::JSONReader json_reader(transp_catalogue, map_settings);
-    json_reader.ReadRequestFrom(std::cin);
+	json_reader::JSONReader json_reader(transp_catalogue, map_settings);
+	json_reader.ReadRequestFrom(std::cin);
 
-    return 0;
+	return 0;
 }
 
 //#include "test_transport_catalogue.h"

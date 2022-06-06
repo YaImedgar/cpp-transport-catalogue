@@ -7,29 +7,26 @@
 
 namespace request_handler
 {
-    class TCHandler final
-    {
-    public:
-        TCHandler() = delete;
-        TCHandler(tc::TransportCatalogue& transp_cat)
-                  : transp_cat_(transp_cat)
-        {}
+	class RequestHandler final
+	{
+	public:
+		RequestHandler() = delete;
+		RequestHandler(tc::TransportCatalogue& transp_cat)
+			: transp_cat_(transp_cat)
+		{}
+		RequestHandler(const RequestHandler&) = delete;
+		RequestHandler(RequestHandler&&) = delete;
+		RequestHandler& operator=(const RequestHandler&) = delete;
+		RequestHandler& operator=(RequestHandler&& other) = delete;
+		~RequestHandler() = default;
 
-        TCHandler( const TCHandler& ) = delete;
-        TCHandler( TCHandler&& ) = default;
+		void AddStops(std::vector<tc::StopParams>& stops);
+		void AddBuses(std::vector<tc::BusParams>& buses);
 
-        TCHandler& operator=(const TCHandler& ) = delete;
-        TCHandler& operator=( TCHandler&& other ) = default;
-
-        ~TCHandler() = default;
-
-        void AddStops(std::vector<tc::StopParams>& stops);
-        void AddBuses(std::vector<tc::BusParams>& buses);
-
-        std::optional<tc::BusInfo> GetBusInfo( std::string bus_name ) const;
-        std::optional<tc::StopInfo> GetStopInfo( std::string stop_name ) const;
-        const std::deque<domain::Bus>& GetAllBuses( void ) const;
-    private:
-        tc::TransportCatalogue& transp_cat_;
-    };
+		std::optional<tc::BusInfo> GetBusInfo(std::string bus_name) const;
+		std::optional<tc::StopInfo> GetStopInfo(std::string stop_name) const;
+		const std::deque<domain::Bus>& GetAllBuses(void) const;
+	private:
+		tc::TransportCatalogue& transp_cat_;
+	};
 }
