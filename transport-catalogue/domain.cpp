@@ -2,116 +2,131 @@
 
 namespace domain
 {
-	Bus::Bus(std::string name, std::vector<Stop*>&& stops, bool is_round)
-		: _bus_name(move(name))
-		, _stops(move(stops))
-		, _total_stops(_stops.size())
-		, _is_round_route(is_round)
-	{
-		_total_unique_stops = std::set<Stop*>(_stops.begin(), _stops.end()).size();
-		_route_length_straight = 0;
-		_route_length_normal = 0;
-		for (size_t i = 0; i < _stops.size() - 1; i++)
-		{
-			_route_length_straight += ComputeDistance(_stops[i]->GetCoordinates(),
-				_stops[i + 1]->GetCoordinates());
+    Bus::Bus( std::string&& name, std::vector<domain::Stop*>&& stops, bool is_round )
+        : name_( std::move( name ) )
+        , stops_( std::move( stops ) )
+        , total_stops_( stops_.size() )
+        , total_unique_stops_( std::set<domain::Stop*>( stops_.begin(), stops_.end() ).size() )
+        , is_round_route_( is_round )
+    {
+        route_length_straight_ = 0;
+        route_length_normal_ = 0;
+        for ( size_t i = 0; i < stops_.size() - 1; i++ )
+        {
+            route_length_straight_ += ComputeDistance( stops_[i]->GetCoordinates(),
+                                                       stops_[i + 1]->GetCoordinates() );
 
-			std::string_view cur_stop = _stops[i]->GetName();
-			std::string_view next_stop = _stops[i + 1]->GetName();
+            std::string cur_stop = std::string( stops_[i]->GetName() );
+            std::string next_stop = std::string( stops_[i + 1]->GetName() );
 
-			std::optional<double> dist_to = _stops[i]->GetDistanceToOtherStop(static_cast<std::string>(next_stop));
-			if (dist_to.has_value())
-			{
-				_route_length_normal += dist_to.value();
-			}
-			else
-			{
-				_route_length_normal += _stops[i + 1]->GetDistanceToOtherStop(static_cast<std::string>(cur_stop)).value();
-			}
-		}
-	}
+            std::optional<double> dist_to = stops_[i]->GetDistToOtherStop( next_stop );
+            if ( dist_to.has_value() )
+            {
+                route_length_normal_ += dist_to.value();
+            }
+            else
+            {
+                route_length_normal_ += stops_[i + 1]->GetDistToOtherStop( cur_stop ).value();
+            }
+        }
+    }
 
-	std::string_view Bus::GetName() const
-	{
-		return _bus_name;
-	}
+    std::string_view Bus::GetName() const
+    {
+        return name_;
+    }
 
-	int Bus::GetTotalStops() const
-	{
-		return _total_stops;
-	}
+    int Bus::GetTotalStops() const
+    {
+        return total_stops_;
+    }
 
-	int Bus::GetTotalUniqueStopst() const
-	{
-		return _total_unique_stops;
-	}
+    int Bus::GetTotalUniqueStops() const
+    {
+        return total_unique_stops_;
+    }
 
-	bool Bus::IsRoundRoute() const
-	{
-		return _is_round_route;
-	}
+    bool Bus::IsRoundRoute() const
+    {
+        return is_round_route_;
+    }
 
-	double Bus::GetRouteLength() const
-	{
-		return _route_length_normal;
-	}
+    double Bus::GetRouteLength() const
+    {
+        return route_length_normal_;
+    }
 
-	double Bus::GetRouteLengthStraight() const
-	{
-		return _route_length_straight;
-	}
+    double Bus::GetRouteLengthStraight() const
+    {
+        return route_length_straight_;
+    }
 
-	double Bus::GetCurvature() const
-	{
-		return GetRouteLength() / GetRouteLengthStraight();
-	}
+    double Bus::GetCurvature() const
+    {
+        return GetRouteLength() / GetRouteLengthStraight();
+    }
 
-	const std::vector<Stop*> Bus::GetBusesStops() const
-	{
-		return _stops;
-	}
+    const std::vector<Stop*> Bus::GetBusesStops() const
+    {
+        return stops_;
+    }
 
-	Stop::Stop(StopParams&& stop)
-		: _stop_name(std::move(std::get<0>(stop))),
-		_coordinates(std::move(std::get<1>(stop))),
-		_distance_to_other_stop(std::move(std::get<2>(stop)))
-	{
-	}
+    void Bus::AddStop( Stop* stop )
+    {
+        stops_.emplace_back( stop );
+    }
 
-	std::string_view Stop::GetName() const
-	{
-		return _stop_name;
-	}
+    Stop::Stop( domain::StopParams&& stop )
+        : name_( std::move( stop.name ) )
+        , coordinates_( std::move( stop.coordinates ) )
+        , distance_to_other_stops_( std::move( stop.dist_to_other_stop ) )
+        , id_( stop.id )
+    {}
 
-	void Stop::AddBus(std::string bus_name)
-	{
-		_buses.insert(bus_name);
-	}
+    std::string_view Stop::GetName() const
+    {
+        return name_;
+    }
 
-	geo::Coordinates Stop::GetCoordinates() const
-	{
-		return _coordinates;
-	}
+    void Stop::AddBus( std::string bus )
+    {
+        buses_.insert( bus );
+    }
 
-	std::set<std::string> Stop::GetBuses() const
-	{
-		return _buses;
-	}
+    geo::Coordinates Stop::GetCoordinates() const
+    {
+        return coordinates_;
+    }
 
-	void Stop::AddDistToOthStop(std::string stop, long distance)
-	{
-		_distance_to_other_stop[stop] = distance;
-	}
+    const std::set<std::string>& Stop::GetBuses() const
+    {
+        return buses_;
+    }
 
-	std::optional<double> Stop::GetDistanceToOtherStop(std::string other_stop)
-	{
-		if (_distance_to_other_stop.count(other_stop))
-		{
-			return { _distance_to_other_stop[other_stop] };
-		}
-		else
-		{
-			return std::nullopt;
-		}
-	}
+    void Stop::AddDistToOtherStop( std::string_view stop, long distance )
+    {
+        distance_to_other_stops_[stop] = distance;
+    }
+
+    std::optional<double> Stop::GetDistToOtherStop( std::string_view other_stop ) const
+    {
+        if ( distance_to_other_stops_.count( other_stop ) )
+        {
+            return { distance_to_other_stops_.at( other_stop ) };
+        }
+        else
+        {
+            return std::nullopt;
+        }
+    }
+
+    void Stop::SetCoordinates( geo::Coordinates&& coordinates )
+    {
+        coordinates_ = std::move( coordinates );
+    }
+
+    size_t Stop::GetId() const
+    {
+        return id_;
+    }
 }

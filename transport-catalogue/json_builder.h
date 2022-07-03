@@ -1,10 +1,3 @@
-//
-// Created by root on 19.05.2022.
-//
-
-//#ifndef JSON_BUILDER_JSON_BUILDER_H
-//#define JSON_BUILDER_JSON_BUILDER_H
-
 #pragma once
 
 #include "json.h"
@@ -36,9 +29,7 @@ namespace json
 		BaseContext& operator=(BaseContext&& other) = delete;
 		~BaseContext() = default;
 
-		BaseContext(Builder& builder)
-			: builder_(builder)
-		{}
+		BaseContext( Builder& builder );
 
 		BaseContext Value(const json::Node& value);
 		DictItemContext StartDict();
@@ -104,9 +95,7 @@ namespace json
 	{
 		ArrayValueItemContext() = delete;
 	public:
-		explicit ArrayValueItemContext(BaseContext& context)
-			: BaseContext(std::move(context))
-		{}
+		explicit ArrayValueItemContext( BaseContext& context );
 
 		ArrayValueItemContext Value(const json::Node& value);
 		KeyItemContext Key(const std::string& key) = delete;
@@ -118,9 +107,7 @@ namespace json
 	{
 		DictValueItemContext() = delete;
 	public:
-		explicit DictValueItemContext(BaseContext& context)
-			: BaseContext(std::move(context))
-		{}
+		explicit DictValueItemContext( BaseContext& context );
 
 		BaseContext Value(const json::Node& value) = delete;
 		DictItemContext StartDict() = delete;
@@ -133,9 +120,7 @@ namespace json
 	{
 		BaseValueItemContext() = delete;
 	public:
-		explicit BaseValueItemContext(BaseContext& context)
-			: BaseContext(std::move(context))
-		{}
+		explicit BaseValueItemContext( BaseContext& context );
 
 		BaseValueItemContext Value(const json::Node& value) = delete;
 		DictItemContext StartDict() = delete;
@@ -185,4 +170,3 @@ namespace json
 		std::stack<Node*> nodes_stack_;
 	};
 }
-//#endif //JSON_BUILDER_JSON_BUILDER_H

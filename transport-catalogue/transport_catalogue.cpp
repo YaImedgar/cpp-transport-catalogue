@@ -2,93 +2,110 @@
 
 namespace tc
 {
-	void TransportCatalogue::AddStop(StopParams&& stop)
-	{
-		_stops.emplace_back(move(stop));
-		domain::Stop& stop_ = _stops.back();
-		_stopname_to_stop.emplace(stop_.GetName(), &stop_);
-	}
+    const domain::Stop* TransportCatalogue::AddStop( domain::StopParams&& stop_params )
+    {
+        if ( stopname_to_stop_.count( stop_params.name ) > 0 )
+        {
+            domain::Stop* stop_ptr = stopname_to_stop_.at( stop_params.name );
+            if ( stop_ptr->GetCoordinates() != geo::Coordinates{} )
+            {
+                return stop_ptr;
+            }
 
-	domain::Stop* TransportCatalogue::FindStop(std::string stop_name) const
-	{
-		if (_stopname_to_stop.count(stop_name) > 0)
-		{
-			return _stopname_to_stop.at(stop_name);
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
+            stop_ptr->SetCoordinates( std::move( stop_params.coordinates ) );
+            for ( auto& [stop, distance] : stop_params.dist_to_other_stop )
+            {
+                stop_ptr->AddDistToOtherStop( stop, distance );
+            }
+            return stop_ptr;
+        }
+        stop_params.id = stops_.size();
+        stops_.emplace_back( std::move( stop_params ) );
+        domain::Stop& stop_ = stops_.back();
+        stopname_to_stop_.emplace( stop_.GetName(), &stop_ );
+        return &stop_;
+    }
 
-	void TransportCatalogue::AddBus(BusParams&& bus)
-	{
-		std::list<std::string> stops = std::move(std::get<1>(bus));
-		std::vector<domain::Stop*> stop_vec;
-		std::string bus_name = std::move(std::get<0>(bus));
+    domain::Stop* TransportCatalogue::FindStop( std::string_view stop_name ) const
+    {
+        if ( stopname_to_stop_.count( stop_name ) > 0 )
+        {
+            return stopname_to_stop_.at( stop_name );
+        }
 
-		for_each(stops.begin(), stops.end(), [&bus_name, &stop_vec, this](std::string& stop_)
-			{
-				domain::Stop* stop = _stopname_to_stop.at(stop_);
-				stop->AddBus(bus_name);
-				stop_vec.push_back(stop);
-			});
+        return nullptr;
+    }
 
-		_buses.emplace_back(move(bus_name), std::move(stop_vec), std::get<2>(bus));
+    void TransportCatalogue::AddBus( domain::BusParams&& bus_params )
+    {
+        auto& [name, stops, is_route] = bus_params;
+        std::vector<domain::Stop*> stops_vec;
+        std::string bus_name = name;
 
-		domain::Bus& bus_ = _buses.back();
-		_busname_to_bus.emplace(bus_.GetName(), &bus_);
-	}
+        for_each( stops.begin(),
+                  stops.end(),
+                  [&stops_vec, &bus_name, this] ( std::string_view stop_name )
+                  {
+                      domain::Stop* stop = stopname_to_stop_.at( stop_name );
+                      stop->AddBus( bus_name );
+                      stops_vec.push_back( stop );
+                  } );
 
-	domain::Bus* TransportCatalogue::FindBus(std::string bus_name) const
-	{
-		if (_busname_to_bus.count(bus_name) > 0)
-		{
-			return _busname_to_bus.at(bus_name);
-		}
-		else
-		{
-			return nullptr;
-		}
-	}
+        buses_.emplace_back( move( bus_name ), std::move( stops_vec ), is_route );
 
-	std::optional<BusInfo> TransportCatalogue::GetBusInfo(std::string bus_name) const
-	{
-		domain::Bus* bus_ptr = FindBus(bus_name);
-		if (bus_ptr != nullptr)
-		{
-			return BusInfo{ bus_ptr->GetTotalStops(),
-							bus_ptr->GetTotalUniqueStopst(),
-							bus_ptr->GetRouteLength(),
-							bus_ptr->GetCurvature() };
-		}
-		else
-		{
-			return std::nullopt;
-		}
-	}
+        domain::Bus& bus = buses_.back();
+        busname_to_bus_.emplace( bus.GetName(), &bus );
+    }
 
-	std::optional<StopInfo> TransportCatalogue::GetStopInfo(std::string stop_name) const
-	{
-		domain::Stop* stop_ptr = FindStop(stop_name);
-		if (stop_ptr != nullptr)
-		{
-			std::set<std::string> names_of_buses = stop_ptr->GetBuses();
-			return StopInfo{ names_of_buses };
-		}
-		else
-		{
-			return std::nullopt;
-		}
-	}
+    domain::Bus* TransportCatalogue::FindBus( std::string bus_name ) const
+    {
+        if ( busname_to_bus_.count( bus_name ) > 0 )
+        {
+            return busname_to_bus_.at( bus_name );
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
 
-	const std::deque<domain::Bus>& TransportCatalogue::GetAllBuses(void) const
-	{
-		return _buses;
-	}
+    std::optional<BusInfo> TransportCatalogue::GetBusInfo( std::string bus_name ) const
+    {
+        domain::Bus* bus_ptr = FindBus( bus_name );
+        if ( bus_ptr != nullptr )
+        {
+            return BusInfo{ bus_ptr->GetTotalStops(),
+                            bus_ptr->GetTotalUniqueStops(),
+                            bus_ptr->GetRouteLength(),
+                            bus_ptr->GetCurvature() };
+        }
+        else
+        {
+            return std::nullopt;
+        }
+    }
 
-	const std::deque<domain::Stop>& TransportCatalogue::GetAllStops(void) const
-	{
-		return _stops;
-	}
+    std::optional<StopInfo> TransportCatalogue::GetStopInfo( std::string stop_name ) const
+    {
+        domain::Stop* stop_ptr = FindStop( stop_name );
+        if ( stop_ptr != nullptr )
+        {
+            const std::set<std::string>& names_of_buses = stop_ptr->GetBuses();
+            return std::move( StopInfo{ names_of_buses } );
+        }
+        else
+        {
+            return std::nullopt;
+        }
+    }
+
+    const std::deque<domain::Bus>& TransportCatalogue::GetAllBuses( void ) const
+    {
+        return buses_;
+    }
+
+    const std::deque<domain::Stop>& TransportCatalogue::GetAllStops( void ) const
+    {
+        return stops_;
+    }
 }

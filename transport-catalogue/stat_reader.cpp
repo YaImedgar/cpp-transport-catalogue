@@ -37,11 +37,11 @@ namespace tc
 					output << query_str << ": ";
 					if (stop_info.has_value())
 					{
-						std::set<std::string> buses = stop_info.value().buses;
+						const auto& buses = stop_info.value().buses;
 						if (!buses.empty())
 						{
 							output << "buses";
-							for (const std::string& bus : buses)
+							for (std::string_view bus : buses)
 							{
 								output << " " << bus;
 							}

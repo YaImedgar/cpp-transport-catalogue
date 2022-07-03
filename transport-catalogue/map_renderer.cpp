@@ -93,9 +93,9 @@ namespace map_render
 				geo::Coordinates stop_coord = stops[stops.size() / 2]->GetCoordinates();
 				if (stop_coord_first != stop_coord)
 				{
-					svg::Point location = sphere_proj(stop_coord);
+					svg::Point loc = sphere_proj(stop_coord);
 
-					AddRouteName(ms, doc, name, location, bus_color);
+					AddRouteName(ms, doc, name, loc, bus_color);
 				}
 			}
 		}

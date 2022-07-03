@@ -1,15 +1,10 @@
-//
-// Created by root on 19.05.2022.
-//
-
-//#ifndef JSON_BUILDER_JSON_H
-//#define JSON_BUILDER_JSON_H
 #pragma once
 
 #include <iostream>
 #include <map>
 #include <string>
 #include <variant>
+#include <sstream>
 #include <vector>
 
 namespace json
@@ -72,14 +67,9 @@ namespace json
 	class Document
 	{
 	public:
-		explicit Document(Node root)
-			: root_(std::move(root))
-		{}
+		explicit Document( Node root );
 
-		[[nodiscard]] const Node& GetRoot() const
-		{
-			return root_;
-		}
+		[[nodiscard]] const Node& GetRoot() const;
 
 	private:
 		Node root_;
@@ -100,5 +90,3 @@ namespace json
 	void Print(const Document& doc, std::ostream& output = std::cout);
 
 }  // namespace json
-
-//#endif //JSON_BUILDER_JSON_H

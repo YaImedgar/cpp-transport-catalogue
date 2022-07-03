@@ -15,14 +15,12 @@
 #include <optional>
 #include <algorithm>
 #include <cmath>
+#include <optional>
 
 using namespace geo;
 
 namespace tc
 {
-	typedef std::tuple<std::string/*Stop Name*/, geo::Coordinates, std::unordered_map<std::string, int>/*Distance to other bus stop*/> StopParams;
-	typedef std::tuple<std::string/*Bus Name*/, std::list<std::string>/*Stops names*/, bool> BusParams;
-
 	struct BusInfo
 	{
 		int total_stops;
@@ -33,27 +31,26 @@ namespace tc
 
 	struct StopInfo
 	{
-		std::set<std::string> buses;
+		const std::set<std::string>& buses;
 	};
 
 	class TransportCatalogue
 	{
 	public:
-		void AddStop(StopParams&& stop);
-		domain::Stop* FindStop(std::string stop_name) const;
-		void AddBus(BusParams&& bus);
+		const domain::Stop* AddStop(domain::StopParams&& stop);
+		domain::Stop* FindStop(std::string_view stop_name) const;
+		void AddBus(domain::BusParams&& bus);
 		domain::Bus* FindBus(std::string bus_name) const;
 
 		std::optional<BusInfo> GetBusInfo(std::string bus_name) const;
 		std::optional<StopInfo> GetStopInfo(std::string stop_name) const;
 		const std::deque<domain::Bus>& GetAllBuses(void) const;
 		const std::deque<domain::Stop>& GetAllStops(void) const;
-
 	private:
-		std::deque<domain::Bus> _buses;
-		std::unordered_map<std::string_view, domain::Bus*> _busname_to_bus;
+		std::deque<domain::Bus> buses_;
+		std::unordered_map<std::string_view, domain::Bus*> busname_to_bus_;
 
-		std::deque<domain::Stop> _stops;
-		std::unordered_map<std::string_view, domain::Stop*> _stopname_to_stop;
+		std::deque<domain::Stop> stops_;
+		std::unordered_map<std::string_view, domain::Stop*> stopname_to_stop_;
 	};
 }

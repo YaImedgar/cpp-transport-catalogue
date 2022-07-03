@@ -13,63 +13,85 @@
 
 namespace domain
 {
-	typedef std::tuple<std::string/*Stop Name*/, geo::Coordinates, std::unordered_map<std::string, int>/*Distance to other bus stop*/> StopParams;
-	typedef std::tuple<std::string/*Bus Name*/, std::list<std::string>/*Stops names*/> BusParams;
+    class Stop;
+    class Bus;
 
-	class Stop
-	{
-	public:
-		explicit Stop(StopParams&& stop);
+    struct StopParams
+    {
+        std::string name;
+        geo::Coordinates coordinates{};
+        std::unordered_map<std::string_view, int> dist_to_other_stop{};
+        size_t id{};
+    };
 
-		Stop() = delete;
-		Stop(const Stop& other) = delete;
-		Stop& operator=(const Stop& other) = delete;
+    struct BusParams
+    {
+        std::string name;
+        std::list<std::string> stops_list;
+        bool is_route = false;
+    };
 
-		Stop(Stop&& other) = delete;
-		Stop& operator=(Stop&& other) = delete;
+    class Stop
+    {
+    public:
+        explicit Stop( StopParams&& stop );
 
-		std::string_view GetName() const;
-		void AddBus(std::string bus_name);
-		geo::Coordinates GetCoordinates() const;
-		std::set<std::string> GetBuses() const;
-		void AddDistToOthStop(std::string stop, long distance);
-		std::optional<double> GetDistanceToOtherStop(std::string other_stop);
+        Stop() = delete;
+        Stop( const Stop& other ) = delete;
+        Stop& operator=( const Stop& other ) = delete;
 
-	private:
-		std::string _stop_name;
-		geo::Coordinates _coordinates;
-		std::unordered_map<std::string, int> _distance_to_other_stop;
-		std::set<std::string> _buses;
-	};
+        Stop( Stop&& other ) = delete;
+        Stop& operator=( Stop&& other ) = delete;
 
-	class Bus
-	{
-	public:
-		explicit Bus(std::string name, std::vector<Stop*>&& bus, bool is_round);
+        std::string_view GetName() const;
+        geo::Coordinates GetCoordinates() const;
+        std::optional<double> GetDistToOtherStop( std::string_view other_stop ) const;
+        const std::set<std::string>& GetBuses() const;
+        size_t GetId() const;
 
-		Bus() = delete;
-		Bus(const Bus& other) = delete;
-		Bus& operator=(const Bus& other) = delete;
+        void AddBus( std::string bus );
+        void AddDistToOtherStop( std::string_view stop, long distance );
+        void SetCoordinates( geo::Coordinates&& coordinates );
 
-		Bus(Bus&& other) = delete;
-		Bus& operator=(Bus&& other) = delete;
+    private:
+        std::string name_;
+        geo::Coordinates coordinates_{};
+        std::unordered_map<std::string_view, int> distance_to_other_stops_{};
+        std::set<std::string> buses_{};
+        size_t id_;
+    };
 
-		std::string_view GetName() const;
-		int GetTotalStops() const;
-		int GetTotalUniqueStopst() const;
-		bool IsRoundRoute() const;
-		double GetRouteLength() const;
-		double GetRouteLengthStraight() const;
-		double GetCurvature() const;
-		const std::vector<Stop*> GetBusesStops() const;
+    class Bus
+    {
+    public:
+        explicit Bus( std::string&& name,
+                      std::vector<Stop*>&& stops,
+                      bool is_round );
 
-	private:
-		std::string _bus_name;
-		std::vector<Stop*> _stops;
-		int _total_stops;
-		int _total_unique_stops;
-		double _route_length_normal;
-		double _route_length_straight;
-		bool _is_round_route = false;
-	};
+        Bus() = delete;
+        Bus( const Bus& other ) = delete;
+        Bus& operator=( const Bus& other ) = delete;
+
+        Bus( Bus&& other ) = delete;
+        Bus& operator=( Bus&& other ) = delete;
+
+        std::string_view GetName() const;
+        int GetTotalStops() const;
+        int GetTotalUniqueStops() const;
+        bool IsRoundRoute() const;
+        double GetRouteLength() const;
+        double GetRouteLengthStraight() const;
+        double GetCurvature() const;
+        const std::vector<Stop*> GetBusesStops() const;
+        void AddStop( Stop* stop );
+
+    private:
+        std::string name_;
+        std::vector<Stop*> stops_;
+        int total_stops_;
+        int total_unique_stops_;
+        double route_length_normal_;
+        double route_length_straight_;
+        bool is_round_route_ = false;
+    };
 } // end domain
