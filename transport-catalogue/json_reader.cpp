@@ -2,44 +2,9 @@
 
 namespace json_reader
 {
-    JSONReader::JSONReader( tc::TransportCatalogue& catalogue, map_render::MapSettings& settings )
-        : map_settings_( settings )
-        , tc_handler_( request_handler::RequestHandler{ catalogue } )
+    JSONReader::JSONReader( tc::TransportCatalogue& catalogue )
+        : tc_handler_( request_handler::RequestHandler{ catalogue } )
     {}
-
-    void JSONReader::ReadRequestFrom( std::istream& input )
-    {
-        const json::Document json_doc = json::Load( input );
-        const json::Node& node = json_doc.GetRoot();
-        const json::Dict& requests = node.AsDict();
-
-        if ( requests.count( "base_requests" ) )
-        {
-            auto base_requests = requests.at( "base_requests" ).AsArray();
-            ParseBaseRequests( std::move( base_requests ) );
-        }
-
-        if ( requests.count( "render_settings" ) )
-        {
-            auto render_settings = requests.at( "render_settings" ).AsDict();
-            SetRenderSettings( std::move( render_settings ), map_settings_ );
-        }
-
-        if ( requests.count( "routing_settings" ) )
-        {
-            auto route_settings = requests.at( "routing_settings" ).AsDict();
-            double bus_wait_time = route_settings.at( "bus_wait_time" ).AsDouble();
-            double bus_velocity = route_settings.at( "bus_velocity" ).AsDouble() * 1000 / 60; // meters in hour
-
-            tc_handler_.CalculateGraph( bus_wait_time, bus_velocity );
-        }
-
-        if ( requests.count( "stat_requests" ) )
-        {
-            auto stat_requests = requests.at( "stat_requests" ).AsArray();
-            ParseStatRequests( std::move( stat_requests ), map_settings_, std::cout );
-        }
-    }
 
     void JSONReader::ParseBaseRequests( const json::Array& base_requests )
     {
@@ -98,7 +63,7 @@ namespace json_reader
         return {};
     }
 
-    void JSONReader::SetRenderSettings( const json::Dict& settings, map_render::MapSettings& general_settings )
+    map_render::MapSettings JSONReader::ParseRenderSettings( const json::Dict& settings )
     {
         map_render::MapSettings map_settings;
 
@@ -144,11 +109,12 @@ namespace json_reader
                 map_settings.color_palette.push_back( GetColor( color ) );
             }
         }
-        general_settings = std::move( map_settings );
+
+        return std::move( map_settings );
     }
 
     void JSONReader::ParseStatRequests( const json::Array& stat_requests,
-                                        map_render::MapSettings& map_settings,
+                                        const map_render::MapSettings& map_settings,
                                         std::ostream& output )
     {
         json::Array request_result;
@@ -317,5 +283,72 @@ namespace json_reader
         }
 
         return std::move( domain::BusParams{ bus_name, stops_list, is_cycle_route } );
+    }
+
+    bool JSONReader::MakeBase(std::istream &input)
+    {
+        const json::Dict& requests = GetRequests(input);
+
+        if (!requests.count("serialization_settings"))
+        {
+            return false;
+        }
+
+        if ( requests.count( "base_requests" ) )
+        {
+            auto base_requests = requests.at( "base_requests" ).AsArray();
+            ParseBaseRequests( std::move( base_requests ) );
+        }
+
+        if ( requests.count( "render_settings" ) )
+        {
+            auto render_settings = requests.at( "render_settings" ).AsDict();
+            tc_handler_.SetRenderSettings(std::move(ParseRenderSettings( std::move( render_settings ) )));
+        }
+
+        if ( requests.count( "routing_settings" ) )
+        {
+            auto route_settings = requests.at( "routing_settings" ).AsDict();
+            double bus_wait_time = route_settings.at( "bus_wait_time" ).AsDouble();
+            double bus_velocity = route_settings.at( "bus_velocity" ).AsDouble() * 1000 / 60; // meters in hour
+
+            tc_handler_.SetBusVelocity(bus_velocity);
+            tc_handler_.SetBusWaitTime(bus_wait_time);
+            tc_handler_.CalculateGraph();
+        }
+
+        std::string filename = GetFileName(requests);
+        return tc_handler_.SaveTo(std::move(filename));
+    }
+
+    bool JSONReader::ProcessRequests(std::istream &input)
+    {
+        const json::Dict& requests = GetRequests(input);
+
+        if (requests.count("serialization_settings"))
+        {
+            std::string filename = GetFileName(requests);
+            if (!tc_handler_.ParseFrom(std::move(filename)))
+            {
+                return false;
+            }
+        }
+
+        if ( requests.count( "stat_requests" ) )
+        {
+            auto stat_requests = requests.at( "stat_requests" ).AsArray();
+            ParseStatRequests( std::move( stat_requests ), tc_handler_.GetRenderSettings(), std::cout );
+        }
+
+        return true;
+    }
+
+    json::Dict JSONReader::GetRequests(std::istream& input) {
+        return json::Load( input ).GetRoot().AsDict();
+    }
+
+    std::string JSONReader::GetFileName(const json::Dict& requests) const
+    {
+        return std::move(requests.at("serialization_settings").AsDict().at("file").AsString());
     }
 }

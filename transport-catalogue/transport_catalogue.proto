@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package tc_serialize;
+
+import "map_renderer.proto";
+import "transport_router.proto";
+
+message Bus{
+    uint32 id = 1;
+    bytes name = 2;
+    repeated uint32 stops_ids = 3;
+    bool is_round_route = 4;
+}
+
+message DistanseToOtherStop
+{
+    uint32 stop_id = 1;
+    uint32 distance = 2;
+}
+
+message Stop{
+    uint32 id = 1;
+    bytes name = 2;
+    double lat = 3;
+    double lng = 4;
+    repeated DistanseToOtherStop distance_to_other_stops = 5;
+    repeated uint32 buses_ids = 6;
+}
+
+message TransportCatalogue
+{
+    repeated Bus buses = 1;
+    repeated Stop stops = 2;
+    RenderSettings render_settings = 3;
+    RoutingSettings routing_settings = 4;
+}

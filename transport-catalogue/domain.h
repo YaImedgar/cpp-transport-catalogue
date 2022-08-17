@@ -21,6 +21,7 @@ namespace domain
         std::string name;
         geo::Coordinates coordinates{};
         std::unordered_map<std::string_view, int> dist_to_other_stop{};
+        std::unordered_map<int, int> dist_to_other_stop_ids{};
         size_t id{};
     };
 
@@ -29,6 +30,7 @@ namespace domain
         std::string name;
         std::list<std::string> stops_list;
         bool is_route = false;
+        size_t id{};
     };
 
     class Stop
@@ -46,6 +48,7 @@ namespace domain
         std::string_view GetName() const;
         geo::Coordinates GetCoordinates() const;
         std::optional<double> GetDistToOtherStop( std::string_view other_stop ) const;
+        const std::unordered_map<std::string_view, int>& GetAllDistanceToOtherStops() const;
         const std::set<std::string>& GetBuses() const;
         size_t GetId() const;
 
@@ -54,17 +57,18 @@ namespace domain
         void SetCoordinates( geo::Coordinates&& coordinates );
 
     private:
+        size_t id_;
         std::string name_;
         geo::Coordinates coordinates_{};
         std::unordered_map<std::string_view, int> distance_to_other_stops_{};
         std::set<std::string> buses_{};
-        size_t id_;
     };
 
     class Bus
     {
     public:
-        explicit Bus( std::string&& name,
+        explicit Bus( size_t id,
+                      std::string&& name,
                       std::vector<Stop*>&& stops,
                       bool is_round );
 
@@ -75,6 +79,7 @@ namespace domain
         Bus( Bus&& other ) = delete;
         Bus& operator=( Bus&& other ) = delete;
 
+        size_t GetId() const;
         std::string_view GetName() const;
         int GetTotalStops() const;
         int GetTotalUniqueStops() const;
@@ -82,10 +87,11 @@ namespace domain
         double GetRouteLength() const;
         double GetRouteLengthStraight() const;
         double GetCurvature() const;
-        const std::vector<Stop*> GetBusesStops() const;
+        const std::vector<Stop*> GetStops() const;
         void AddStop( Stop* stop );
 
     private:
+        size_t id_;
         std::string name_;
         std::vector<Stop*> stops_;
         int total_stops_;

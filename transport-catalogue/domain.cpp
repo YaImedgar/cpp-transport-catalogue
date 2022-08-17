@@ -2,8 +2,9 @@
 
 namespace domain
 {
-    Bus::Bus( std::string&& name, std::vector<domain::Stop*>&& stops, bool is_round )
-        : name_( std::move( name ) )
+    Bus::Bus( size_t id, std::string&& name, std::vector<domain::Stop*>&& stops, bool is_round )
+        : id_(id)
+        , name_( std::move( name ) )
         , stops_( std::move( stops ) )
         , total_stops_( stops_.size() )
         , total_unique_stops_( std::set<domain::Stop*>( stops_.begin(), stops_.end() ).size() )
@@ -66,7 +67,7 @@ namespace domain
         return GetRouteLength() / GetRouteLengthStraight();
     }
 
-    const std::vector<Stop*> Bus::GetBusesStops() const
+    const std::vector<Stop*> Bus::GetStops() const
     {
         return stops_;
     }
@@ -74,6 +75,10 @@ namespace domain
     void Bus::AddStop( Stop* stop )
     {
         stops_.emplace_back( stop );
+    }
+
+    size_t Bus::GetId() const {
+        return id_;
     }
 
     Stop::Stop( domain::StopParams&& stop )
@@ -128,5 +133,9 @@ namespace domain
     size_t Stop::GetId() const
     {
         return id_;
+    }
+
+    const std::unordered_map<std::string_view, int> &Stop::GetAllDistanceToOtherStops() const {
+        return distance_to_other_stops_;
     }
 }

@@ -15,8 +15,8 @@ namespace map_render
 			if (bus.GetTotalStops() > 0)
 			{
 				sorted_buses.emplace(bus.GetName(), &bus);
-				const auto& stops = bus.GetBusesStops();
-				for (const auto& stop : bus.GetBusesStops())
+				const auto& stops = bus.GetStops();
+				for (const auto& stop : stops)
 				{
 					all_stops.emplace(stop->GetName(), stop);
 					coordinates.push_back(stop->GetCoordinates());
@@ -58,7 +58,7 @@ namespace map_render
 			bus_svg.SetFillColor(svg::NoneColor);
 			bus_svg.SetStrokeLineJoin(svg::StrokeLineJoin::ROUND);
 			bus_svg.SetStrokeLineCap(svg::StrokeLineCap::ROUND);
-			for (const auto& stop : bus->GetBusesStops())
+			for (const auto& stop : bus->GetStops())
 			{
 				bus_svg.AddPoint(sphere_proj(stop->GetCoordinates()));
 			}
@@ -82,14 +82,14 @@ namespace map_render
 			svg::Color bus_color = bus_colors_ptr[i];
 			++i;
 
-			geo::Coordinates stop_coord_first = bus->GetBusesStops().front()->GetCoordinates();
+			geo::Coordinates stop_coord_first = bus->GetStops().front()->GetCoordinates();
 			svg::Point location = sphere_proj(stop_coord_first);
 
 			AddRouteName(ms, doc, name, location, bus_color);
 
 			if (!bus->IsRoundRoute())
 			{
-				const auto& stops = bus->GetBusesStops();
+				const auto& stops = bus->GetStops();
 				geo::Coordinates stop_coord = stops[stops.size() / 2]->GetCoordinates();
 				if (stop_coord_first != stop_coord)
 				{

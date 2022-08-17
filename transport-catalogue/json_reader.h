@@ -1,5 +1,4 @@
 #pragma once
-
 #include "json.h"
 #include "json_builder.h"
 #include "transport_catalogue.h"
@@ -16,20 +15,22 @@ namespace json_reader
     {
     public:
         JSONReader() = delete;
-        JSONReader( tc::TransportCatalogue& catalogue,
-                    map_render::MapSettings& settings );
+        JSONReader( tc::TransportCatalogue& catalogue );
         JSONReader( const JSONReader& ) = delete;
         JSONReader( JSONReader&& ) = delete;
         JSONReader& operator=( const JSONReader& ) = delete;
         JSONReader& operator=( JSONReader&& other ) = delete;
         ~JSONReader() = default;
 
-        void ReadRequestFrom( std::istream& input );
+        bool MakeBase( std::istream& input );
+        bool ProcessRequests( std::istream& input );
     private:
+        json::Dict GetRequests(std::istream& input);
+        std::string GetFileName(const json::Dict& requests) const;
         void ParseBaseRequests( const json::Array& base_requests );
-        void SetRenderSettings( const json::Dict& settings, map_render::MapSettings& general_settings );
+        map_render::MapSettings ParseRenderSettings( const json::Dict& settings );
         void ParseStatRequests( const json::Array& stat_requests,
-                                map_render::MapSettings& map_settings,
+                                const map_render::MapSettings& map_settings,
                                 std::ostream& output );
 
         domain::StopParams ParseStop( const json::Dict& stop );
@@ -38,7 +39,6 @@ namespace json_reader
         svg::Point GetSVGPoint( const json::Array& pair );
         svg::Color GetColor( const json::Node& color_node );
 
-        map_render::MapSettings& map_settings_;
         request_handler::RequestHandler tc_handler_;
     };
 }

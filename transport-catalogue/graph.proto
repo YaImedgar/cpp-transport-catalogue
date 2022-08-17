@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package tc_serialize;
+
+message Edge
+{
+  uint32 from = 1;
+  uint32 to = 2;
+  double weigth = 3;
+  uint32 span_count = 4;
+  uint32 stop_or_bus_id = 5;
+}
+
+message IncidenceList
+{
+  repeated uint32 edge_ids = 1;
+}
+
+message Graph
+{
+  repeated Edge edges = 1;
+  repeated IncidenceList incidence_list = 2;
+}

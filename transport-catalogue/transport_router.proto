@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package tc_serialize;
+
+import "graph.proto";
+
+message RouteInternalData
+{
+  bool is_empty = 1;
+  double weight = 2;
+  int64 prev_edge = 3;
+}
+
+message RoutesInternalData
+{
+  repeated RouteInternalData route_internal_data_ = 1;
+}
+
+message RoutingSettings
+{
+  Graph graph = 1;
+  repeated RoutesInternalData routes_internal_data = 2;
+}

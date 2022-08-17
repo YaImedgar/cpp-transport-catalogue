@@ -1,18 +1,44 @@
 ﻿#include "transport_catalogue.h"
 #include "json_reader.h"
-#include "map_renderer.h"
 
+#include <iostream>
+#include <string_view>
+
+using namespace std::literals;
 using namespace std;
 
-int main()
-{
-	tc::TransportCatalogue transp_catalogue;
-	map_render::MapSettings map_settings;
+void PrintUsage(std::ostream& stream = std::cout) {
+    stream << "Usage: transport_catalogue [make_base|process_requests]\n"sv;
+}
 
-	json_reader::JSONReader json_reader(transp_catalogue, map_settings);
-	json_reader.ReadRequestFrom(std::cin);
-
-	return 0;
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        PrintUsage();
+        return 1;
+    }
+    tc::TransportCatalogue tc;
+    json_reader::JSONReader json_reader(tc);
+    const std::string_view mode(argv[1]);
+    if (mode == "make_base"sv)
+    {
+        if (!json_reader.MakeBase(std::cin))
+        {
+            cerr << "Failed to Save base" << endl;
+        }
+    }
+    else if (mode == "process_requests"sv)
+    {
+        if (!json_reader.ProcessRequests(std::cin))
+        {
+            cerr << "Failed to Load base" << endl;
+        }
+    }
+    else
+    {
+        PrintUsage();
+        return 1;
+    }
+    return 0;
 }
 
 //#include "test_transport_catalogue.h"

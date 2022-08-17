@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package tc_serialize;
+
+message Point
+{
+  double x = 1;
+  double y = 2;
+}

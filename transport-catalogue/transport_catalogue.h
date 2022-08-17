@@ -1,5 +1,4 @@
 #pragma once
-
 #include "geo.h"
 #include "domain.h"
 
@@ -27,30 +26,37 @@ namespace tc
 		int total_unique_stops;
 		double route_length;
 		double curvature;
+        size_t id;
 	};
 
 	struct StopInfo
 	{
 		const std::set<std::string>& buses;
+        size_t id;
 	};
 
 	class TransportCatalogue
 	{
 	public:
 		const domain::Stop* AddStop(domain::StopParams&& stop);
-		domain::Stop* FindStop(std::string_view stop_name) const;
-		void AddBus(domain::BusParams&& bus);
-		domain::Bus* FindBus(std::string bus_name) const;
+        domain::Stop* FindStop(std::string_view stop_name) const;
+        void AddBus(domain::BusParams&& bus);
+		domain::Bus* FindBus(std::string_view bus_name) const;
 
-		std::optional<BusInfo> GetBusInfo(std::string bus_name) const;
-		std::optional<StopInfo> GetStopInfo(std::string stop_name) const;
+		std::optional<BusInfo> GetBusInfo(std::string_view bus_name) const;
+		std::optional<StopInfo> GetStopInfo(std::string_view stop_name) const;
 		const std::deque<domain::Bus>& GetAllBuses(void) const;
 		const std::deque<domain::Stop>& GetAllStops(void) const;
-	private:
+
+        std::string_view GetStopNameById(int id) const;
+        std::string_view GetBusNameById(int id) const;
+    private:
 		std::deque<domain::Bus> buses_;
 		std::unordered_map<std::string_view, domain::Bus*> busname_to_bus_;
+        std::unordered_map<size_t, domain::Bus*> id_to_bus_;
 
 		std::deque<domain::Stop> stops_;
-		std::unordered_map<std::string_view, domain::Stop*> stopname_to_stop_;
-	};
+        std::unordered_map<std::string_view, domain::Stop*> stopname_to_stop_;
+        std::unordered_map<size_t, domain::Stop*> id_to_stop_;
+    };
 }

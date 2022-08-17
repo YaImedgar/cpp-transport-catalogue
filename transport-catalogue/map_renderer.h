@@ -102,7 +102,7 @@ namespace map_render
 		}
 
 	private:
-		bool IsZero(double value)
+		static bool IsZero(double value)
 		{
 			return std::abs(value) < EPSILON;
 		}

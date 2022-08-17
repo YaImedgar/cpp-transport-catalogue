@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package tc_serialize;
+
+import "svg.proto";
+
+message Color
+{
+  // type 1 - monostate
+  // type 2 - string
+  // type 3 - rgb
+  // type 4 - rgba
+  // type_and_rgb [1 byte is type] [2 - red, 3 - green, 4 - blue]
+  uint32 type_and_rgb = 1;
+  string color_name = 2;
+  double opacity = 4;
+}
+
+message RenderSettings
+{
+  double width = 1;
+  double height = 2;
+  double padding = 3;
+  double line_width = 4;
+  double stop_radius = 5;
+  int32 bus_label_font_size = 6;
+  Point bus_label_offset = 7;
+  int32 stop_label_font_size = 8;
+  Point stop_label_offset = 9;
+
+  Color underlayer_color = 10;
+  double underlayer_width = 11;
+  repeated Color color_palette = 12;
+}

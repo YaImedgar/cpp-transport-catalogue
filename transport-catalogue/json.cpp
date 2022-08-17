@@ -24,7 +24,6 @@ namespace json
         Node LoadArray( std::istream& input )
         {
             std::vector<Node> result;
-            result.reserve( 30000 );
 
             for ( char c; input >> c && c != ']';)
             {
